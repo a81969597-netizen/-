@@ -1,7 +1,7 @@
 const CACHE_NAME = 'cyber-strike-v1';
 const ASSETS = [
   './index.html',
-  './image.png',
+  './hoho.png',    // <-- ضفنا الصورة الجديدة هنا
   './shoot.mp3',
   './file.mp3',
   './ahoh.mp3',
