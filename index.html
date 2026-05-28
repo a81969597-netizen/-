@@ -454,15 +454,18 @@
     }  
 
     function spawnBots() {  
+        const textureLoader = new THREE.TextureLoader();
+        const faceTexture = textureLoader.load('hoho.png');
         const bodyGeo = new THREE.CylinderGeometry(0.8, 0.8, 2, 16);  
-        const headGeo = new THREE.SphereGeometry(0.6, 16, 16);  
+        const headGeo = new THREE.PlaneGeometry(1.2, 1.2);  
         const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8 });  
-        const headMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xff0000, emissiveIntensity: 0.8 });  
+        // إضافة DoubleSide هنا لمنع الاختفاء تماماً
+        const headMat = new THREE.MeshBasicMaterial({ map: faceTexture, transparent: true, side: THREE.DoubleSide });  
 
         for(let i=0; i<totalBots; i++) {  
             const botGroup = new THREE.Group();  
             const body = new THREE.Mesh(bodyGeo, bodyMat); body.position.y = 1; body.castShadow = true;  
-            const head = new THREE.Mesh(headGeo, headMat); head.position.y = 2.5; head.castShadow = true;  
+            const head = new THREE.Mesh(headGeo, headMat); head.position.y = 2.5; head.castShadow = true; head.name = "botface";  
             const hbGeo = new THREE.PlaneGeometry(1.5, 0.2);  
             const hbMat = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });  
             const hb = new THREE.Mesh(hbGeo, hbMat); hb.position.y = 3.5; hb.name = "healthbar";  
@@ -618,10 +621,21 @@
         for (let i = bots.length - 1; i >= 0; i--) {  
             const bot = bots[i];  
             if (!bot.active) continue;  
+            
+            // جعل جسم الروبوت يلتفت لكاميرا اللاعب
             const targetPos = new THREE.Vector3(camera.position.x, bot.mesh.position.y, camera.position.z);  
             bot.mesh.lookAt(targetPos);  
+            
+            // تعديل التفاف شريط الحياة والوجه المسطح ليكونا مواجهين للكاميرا بشكل صحيح تماماً وبدون قلب الإحداثيات
             const hb = bot.mesh.children.find(c => c.name === "healthbar");  
-            if(hb) hb.lookAt(camera.position);  
+            if(hb) {
+                hb.lookAt(camera.position);
+            }  
+            const face = bot.mesh.children.find(c => c.name === "botface");  
+            if(face) {
+                face.lookAt(camera.position);
+            }  
+
             const dist = bot.mesh.position.distanceTo(camera.position);  
             if (dist > 3) { bot.mesh.translateZ(bot.speed * delta); }   
             else { if (clock.elapsedTime - bot.lastAttack > 1.0) { bot.lastAttack = clock.elapsedTime; takeDamage(15); } }  
