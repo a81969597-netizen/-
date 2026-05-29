@@ -105,6 +105,7 @@
 
 <script type="module">  
     import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';  
+    import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
     // --- PWA Service Worker Registration ---
     if ('serviceWorker' in navigator) {
@@ -129,7 +130,7 @@
     const startGameSound = new Audio('file.mp3');
     const damageSound = new Audio('ahoh.mp3');
     const reloadSound = new Audio('elahwe.mp3');
-    const killSound = new Audio('kosha.mp3'); // تمت إضافة صوت القتل هنا
+    const killSound = new Audio('kosha.mp3'); 
     let fireInterval = null;  
     // -----------------------  
 
@@ -246,12 +247,35 @@
         gridTexture.position.y = 0.01;  
         scene.add(gridTexture);  
 
-        const floorGeo = new THREE.PlaneGeometry(200, 200);  
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x050510, roughness: 0.8 });  
-        const floor = new THREE.Mesh(floorGeo, floorMat);  
-        floor.rotation.x = -Math.PI / 2;  
-        floor.receiveShadow = true;  
-        scene.add(floor);  
+        // --- التعديل هنا: تحميل ملف الأرضية 3D ورصه جنب بعض ---
+        const loader = new GLTFLoader();
+        loader.load('floor_material.glb', function(gltf) {
+            const tile = gltf.scene;
+            
+            tile.traverse(function(child) {
+                if (child.isMesh) {
+                    child.receiveShadow = true;
+                }
+            });
+
+            const box = new THREE.Box3().setFromObject(tile);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            
+            const stepX = size.x > 0.1 ? size.x : 10;
+            const stepZ = size.z > 0.1 ? size.z : 10;
+
+            for (let x = -100; x <= 100; x += stepX) {
+                for (let z = -100; z <= 100; z += stepZ) {
+                    const clone = tile.clone();
+                    clone.position.set(x, 0, z);
+                    scene.add(clone);
+                }
+            }
+        }, undefined, function(error) {
+            console.error('Error loading floor_material.glb:', error);
+        });
+        // --------------------------------------------------
 
         const wallMat = new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.5 });  
         createObstacle(new THREE.BoxGeometry(200, 20, 2), wallMat, 0, 10, -100);  
@@ -441,7 +465,6 @@
         lookZone.addEventListener('touchend', endLook);  
         lookZone.addEventListener('touchcancel', endLook);  
 
-        // تعديل أزرار الموبايل للرشاش  
         const btnFire = document.getElementById('btn-fire');  
         btnFire.addEventListener('touchstart', (e) => { e.preventDefault(); startFiring(); });  
         btnFire.addEventListener('touchend', (e) => { e.preventDefault(); stopFiring(); });  
@@ -456,35 +479,27 @@
 
     function spawnBots() {  
         const textureLoader = new THREE.TextureLoader();
-        // CHANGE: Image name changed from hoho.png to doksh.png
         const faceTexture = textureLoader.load('doksh.png');
 
-        // CHANGE: Robot body geometry/materials removed. New plane geometry for entire body.
-        // Adjusted size e.g., 1.2w x 2.4h for better character proportions
         const bodyGeo = new THREE.PlaneGeometry(1.2, 2.4);
-
-        // CHANGE: Material applies to new Plane body. Kept DoubleSide and transparency.
         const bodyMat = new THREE.MeshBasicMaterial({ map: faceTexture, transparent: true, side: THREE.DoubleSide });
 
         for(let i=0; i<totalBots; i++) {  
             const botGroup = new THREE.Group();
 
-            // CHANGE: Create just the image plane as the enemy body.
             const bodyImage = new THREE.Mesh(bodyGeo, bodyMat);
-            bodyImage.position.y = 1.2; // center at half height
+            bodyImage.position.y = 1.2; 
             bodyImage.castShadow = true;
-            bodyImage.name = "botface"; // Kept name for existing updateAI lookAt logic
+            bodyImage.name = "botface"; 
 
-            // UNCHANGED: Healthbar logic remains the same, adjusted height slightly.
             const hbGeo = new THREE.PlaneGeometry(1.5, 0.2);  
             const hbMat = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });  
             const hb = new THREE.Mesh(hbGeo, hbMat);
-            hb.position.y = 2.8; // Position above the Plane body
+            hb.position.y = 2.8; 
             hb.name = "healthbar";
 
             botGroup.add(bodyImage); botGroup.add(hb);
 
-            // Positioning logic remains unchanged
             let px, pz;  
             do { px = (Math.random() - 0.5) * 180; pz = (Math.random() - 0.5) * 180; } while (Math.abs(px) < 30 && Math.abs(pz) < 30);  
             botGroup.position.set(px, 0, pz);  
@@ -497,7 +512,6 @@
     function shoot() {  
         if (player.ammo <= 0 || player.reloading) return;  
 
-        // تشغيل الصوت  
         if (shootSound.paused) shootSound.play();  
 
         player.ammo--;  
@@ -545,10 +559,8 @@
                 spawnParticles(hitBot.mesh.position.clone().add(new THREE.Vector3(0,2,0)), 0xff0000, 30);  
                 scene.remove(hitBot.mesh);  
                 player.score++;  
-                // --- تشغيل صوت القتل هنا ---
                 killSound.currentTime = 0; 
                 killSound.play();
-                // --------------------------
                 updateHUD();  
                 checkWinCondition();  
             }  
@@ -640,11 +652,9 @@
             const bot = bots[i];  
             if (!bot.active) continue;  
             
-            // جعل جسم الروبوت يلتفت لكاميرا اللاعب
             const targetPos = new THREE.Vector3(camera.position.x, bot.mesh.position.y, camera.position.z);  
             bot.mesh.lookAt(targetPos);  
             
-            // تعديل التفاف شريط الحياة والوجه المسطح ليكونا مواجهين للكاميرا بشكل صحيح تماماً وبدون قلب الإحداثيات
             const hb = bot.mesh.children.find(c => c.name === "healthbar");  
             if(hb) {
                 hb.lookAt(camera.position);

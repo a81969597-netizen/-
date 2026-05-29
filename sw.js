@@ -1,13 +1,14 @@
 const CACHE_NAME = 'cyber-strike-v2';
 const ASSETS = [
   './index.html',
-  './hoho.png',    // الصورة القديمة
-  './doksh.png',   // الصورة الجديدة للعدو
+  './hoho.png',
+  './doksh.png',
+  './floor_material.glb', // <-- ضفنا ملف الأرضية هنا
   './shoot.mp3',
   './file.mp3',
   './ahoh.mp3',
   './elahwe.mp3',
-  './kosha.mp3'    // صوت القتل اللي لسه ضايفينه
+  './kosha.mp3'
 ];
 
 self.addEventListener('install', (e) => {
