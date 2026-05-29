@@ -123,12 +123,13 @@
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);  
     let gameActive = false;  
       
-    // --- تعديلات الرشاش ---  
+    // --- تعديلات الرشاش والأصوات ---  
     const shootSound = new Audio('shoot.mp3');  
     shootSound.loop = true;  
     const startGameSound = new Audio('file.mp3');
     const damageSound = new Audio('ahoh.mp3');
     const reloadSound = new Audio('elahwe.mp3');
+    const killSound = new Audio('kosha.mp3'); // تمت إضافة صوت القتل هنا
     let fireInterval = null;  
     // -----------------------  
 
@@ -455,22 +456,35 @@
 
     function spawnBots() {  
         const textureLoader = new THREE.TextureLoader();
-        const faceTexture = textureLoader.load('hoho.png');
-        const bodyGeo = new THREE.CylinderGeometry(0.8, 0.8, 2, 16);  
-        const headGeo = new THREE.PlaneGeometry(1.2, 1.2);  
-        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8 });  
-        // إضافة DoubleSide هنا لمنع الاختفاء تماماً
-        const headMat = new THREE.MeshBasicMaterial({ map: faceTexture, transparent: true, side: THREE.DoubleSide });  
+        // CHANGE: Image name changed from hoho.png to doksh.png
+        const faceTexture = textureLoader.load('doksh.png');
+
+        // CHANGE: Robot body geometry/materials removed. New plane geometry for entire body.
+        // Adjusted size e.g., 1.2w x 2.4h for better character proportions
+        const bodyGeo = new THREE.PlaneGeometry(1.2, 2.4);
+
+        // CHANGE: Material applies to new Plane body. Kept DoubleSide and transparency.
+        const bodyMat = new THREE.MeshBasicMaterial({ map: faceTexture, transparent: true, side: THREE.DoubleSide });
 
         for(let i=0; i<totalBots; i++) {  
-            const botGroup = new THREE.Group();  
-            const body = new THREE.Mesh(bodyGeo, bodyMat); body.position.y = 1; body.castShadow = true;  
-            const head = new THREE.Mesh(headGeo, headMat); head.position.y = 2.5; head.castShadow = true; head.name = "botface";  
+            const botGroup = new THREE.Group();
+
+            // CHANGE: Create just the image plane as the enemy body.
+            const bodyImage = new THREE.Mesh(bodyGeo, bodyMat);
+            bodyImage.position.y = 1.2; // center at half height
+            bodyImage.castShadow = true;
+            bodyImage.name = "botface"; // Kept name for existing updateAI lookAt logic
+
+            // UNCHANGED: Healthbar logic remains the same, adjusted height slightly.
             const hbGeo = new THREE.PlaneGeometry(1.5, 0.2);  
             const hbMat = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });  
-            const hb = new THREE.Mesh(hbGeo, hbMat); hb.position.y = 3.5; hb.name = "healthbar";  
-            botGroup.add(body); botGroup.add(head); botGroup.add(hb);  
+            const hb = new THREE.Mesh(hbGeo, hbMat);
+            hb.position.y = 2.8; // Position above the Plane body
+            hb.name = "healthbar";
 
+            botGroup.add(bodyImage); botGroup.add(hb);
+
+            // Positioning logic remains unchanged
             let px, pz;  
             do { px = (Math.random() - 0.5) * 180; pz = (Math.random() - 0.5) * 180; } while (Math.abs(px) < 30 && Math.abs(pz) < 30);  
             botGroup.position.set(px, 0, pz);  
@@ -531,6 +545,10 @@
                 spawnParticles(hitBot.mesh.position.clone().add(new THREE.Vector3(0,2,0)), 0xff0000, 30);  
                 scene.remove(hitBot.mesh);  
                 player.score++;  
+                // --- تشغيل صوت القتل هنا ---
+                killSound.currentTime = 0; 
+                killSound.play();
+                // --------------------------
                 updateHUD();  
                 checkWinCondition();  
             }  
