@@ -246,14 +246,29 @@
         gridTexture.position.y = 0.01;  
         scene.add(gridTexture);  
 
+        // إضافة أداة تحميل الصور
+        const textureLoader = new THREE.TextureLoader();
+
+        // --- إعداد صورة الأرضية (ard.jpg) ورصها ---
+        const floorTex = textureLoader.load('ard.jpg');
+        floorTex.wrapS = THREE.RepeatWrapping;
+        floorTex.wrapT = THREE.RepeatWrapping;
+        floorTex.repeat.set(40, 40); // تكرار الصورة 40 مرة بالطول والعرض
+
         const floorGeo = new THREE.PlaneGeometry(200, 200);  
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x050510, roughness: 0.8 });  
+        const floorMat = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.8 });  
         const floor = new THREE.Mesh(floorGeo, floorMat);  
         floor.rotation.x = -Math.PI / 2;  
         floor.receiveShadow = true;  
         scene.add(floor);  
 
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.5 });  
+        // --- إعداد صورة الحيطان (het.jpg) ورصها ---
+        const wallTex = textureLoader.load('het.jpg');
+        wallTex.wrapS = THREE.RepeatWrapping;
+        wallTex.wrapT = THREE.RepeatWrapping;
+        wallTex.repeat.set(40, 4); // تكرار الصورة عشان الحيطة طويلة
+
+        const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.5 });  
         createObstacle(new THREE.BoxGeometry(200, 20, 2), wallMat, 0, 10, -100);  
         createObstacle(new THREE.BoxGeometry(200, 20, 2), wallMat, 0, 10, 100);  
         createObstacle(new THREE.BoxGeometry(2, 20, 200), wallMat, -100, 10, 0);  
