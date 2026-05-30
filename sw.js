@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyber-strike-v3'; // غيرنا الرقم عشان المتصفح يحدّث الملفات
+const CACHE_NAME = 'cyber-strike-v4'; // رفعنا الرقم عشان المتصفح يسحب التعديل الجديد
 const ASSETS = [
   './index.html',
   './hoho.png',    // الصورة القديمة
@@ -9,7 +9,8 @@ const ASSETS = [
   './file.mp3',
   './ahoh.mp3',
   './elahwe.mp3',
-  './kosha.mp3'    // صوت القتل
+  './kosha.mp3',   // صوت القتل
+  './skybox.glb'   // <-- ملف السما الصح انضاف هنا
 ];
 
 self.addEventListener('install', (e) => {
